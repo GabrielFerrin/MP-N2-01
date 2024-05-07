@@ -1,0 +1,12 @@
+GET http://localhost:3000
+
+###
+GET http://localhost:3000/api/usuarios
+
+###
+GET http://localhost:3000/api/usuarios/export
+
+###
+POST http://localhost:3000/api/usuarios/import
+Content-Disposition: form-data; name="file"; filename="./assets/temp/backup.csv"
+Content-Type: text/csv

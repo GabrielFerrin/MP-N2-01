@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .5rem;
+  height: 100vh;
+  align-items: center;
+  background: rgb(73, 84, 161);
+  background: linear-gradient(90deg, rgba(73, 84, 161, 1) 0%, rgba(137, 142, 198, 1) 100%);
+  color: white;
+}
+
+button {
+  font-size: 1rem;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: .2rem;
+  background-color: white;
+  cursor: pointer;
+  width: 150px;
+}
+
+p {
+  font-size: 1rem;
+}
