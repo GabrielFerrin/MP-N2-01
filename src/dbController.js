@@ -70,9 +70,11 @@ export async function getUsersInternal() {
 export function importUsers(res, req) {
   let fileData = '';
   let details = [];
+  // get file chunks
   req.on('data', (chunk) => {
     fileData += chunk;
   });
+  // validate and save files
   req.on('end', () => {
     const users = csvToJson(fileData);
     users.forEach(async (user, i) => {
@@ -83,7 +85,8 @@ export function importUsers(res, req) {
       }
       if (i === users.length - 1) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(details));
+        res.end(JSON.
+          stringify({ id: user.id, name: user.nombres, details }));
       }
     })
   })
@@ -93,45 +96,103 @@ function addUser(user) {
   return new Promise((resolve, reject) => {
     // validate data
     const resValidate = validateUser(user);
-    const checkQuery = 'SELECT * FROM user WHERE correo = ?';
-    pool.query(checkQuery, [user.correo], (err, rows) => {
+    if (resValidate.error) reject(resValidate);
+    // add user
+    else {
+      const query = 'INSERT INTO user (nombres, apellidos, ' +
+        'direccion, correo, dni, edad, fecha_creacion, ' +
+        'telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+      pool.query(query, [user.nombres, user.apellidos, user.direccion,
+      user.correo, user.dni, user.edad, user.fecha_creacion,
+      user.telefono], (err, result) => {
+        // handle errors
+        if (err)
+          reject({
+            status: 500, message: 'Error de acceso a la base de ' +
+              'datos para agregar al usuario ' + user.nombres,
+            details: 'id: ' + user.id + ' | apellidos: ' + user.apellidos,
+            body: err
+          });
+        // notify success adding user
+        else {
+          resolve({
+            status: 200, message: 'OK', details: 'id: ' +
+              rows.insertId + ' nombres: ' + user.nombres +
+              ' | apellidos: ' + user.apellidos, body: rows
+          });
+        }
+      })
+    }
+  });
+}
+
+export async function validateUser(user) {
+  let error = false;
+  let errorsList = [];
+  let response = {};
+  // missing fields
+  if (!user.nombres) { error = true; errorsList.push('falta el campo \"nombres\"'); }
+  if (!user.apellidos) { error = true; errorsList.push('Falta el campo \"apellidos\"'); }
+  if (!user.direccion) { error = true; errorsList.push('Falta el campo \"direccion\"'); }
+  if (!user.correo) { error = true; errorsList.push('Falta el campo \"correo\"'); }
+  if (!user.dni) { error = true; errorsList.push('Falta el campo \"dni\"'); }
+  if (!user.edad) { error = true; errorsList.push('Falta el campo \"edad\"'); }
+  if (!user.telefono) { error = true; errorsList.push('Falta el campo \"telefono\"'); }
+  // email format
+  if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(user.correo)) {
+    error = true;
+    errorsList.push('El correo ' + user.correo + ' no es valido');
+  }
+  // valid age
+  if (user.edad < 0 || user.edad > 150) {
+    error = true;
+    errorsList.push('La edad ' + user.edad + ' no es valida');
+  }
+  // id is not already in the database
+  try {
+    const idCheck = await chekcId(user.id, user.correo);
+    if (idCheck.error) {
+      error = true;
+      errorsList.push(idCheck.detail);
+    }
+  } catch (err) {
+    error = true;
+    errorsList.push(err.detail);
+  }
+  // email is not already in the database
+  try {
+    const emailCheck = await chekcEmail(user.correo);
+    if (emailCheck.error) {
+      error = true;
+      errorsList.push(emailCheck.detail);
+    }
+  } catch (err) {
+    error = true;
+    errorsList.push(err.detail);
+  }
+  // prepare and return error messages
+  errorsList.forEach((error, i) => {
+    response['Error-' + (i + 1)] = error;
+  })
+  return errorsList.length ? { ErrorsList: response } : 'OK';
+}
+
+export async function chekcId(id) {
+  return new Promise((resolve, reject) => {
+    // check if id is already in the database
+    const idQuery = 'SELECT * FROM user WHERE id = ?';
+    pool.query(idQuery, [id], (err, rows) => {
       if (err) {
         reject({
-          status: 500, message: 'Error de acceso a la base de ' +
-            'datos para verificar el correo ' + user.correo,
-          details: 'id: ' + user.id + ' | nombres: ' +
-            user.nombres + ' | apellidos: ' + user.apellidos,
-          body: err
+          error: true, detail: 'No se pudo acceder a la ' +
+            'base de datos para verificar el id ' + id
         });
       } else {
-        if (rows.length === 0) {
-          user.fecha_creacion = new Date(); // date created
-          const query = 'INSERT INTO user (nombres, apellidos, direccion,' +
-            ' correo, dni, edad, fecha_creacion, telefono) VALUES (?, ?, ?,' +
-            '?, ?, ?, ?, ?)';
-          pool.query(query, [user.nombres, user.apellidos, user.direccion,
-          user.correo, user.dni, user.edad, user.fecha_creacion,
-          user.telefono], (err, rows) => {
-            if (err) {
-              reject({
-                status: 500, message: 'No se pudo insertar el usuario',
-                body: err
-              });
-            }
-            else {
-              resolve({
-                status: 200, message: 'OK', details: 'id: ' +
-                  rows.insertId + ' nombres: ' + user.nombres +
-                  ' | apellidos: ' + user.apellidos, body: rows
-              });
-            }
-          });
-        } else {
+        if (rows.length === 0) resolve({ error: false })
+        else {
           reject({
-            status: 500, message: 'El correo ' + user.correo +
-              ' ya esta registrado', details: 'id: ' + user.id
-                + ' | nombres: ' + user.nombres + ' | apellidos: ' +
-                user.apellidos, body: err
+            error: true, detail: 'El id ' + id +
+              ' ya esta registrado'
           });
         }
       }
@@ -139,26 +200,27 @@ function addUser(user) {
   });
 }
 
-export function validateUser(user) {
-  let error = false;
-  let errorsList = [];
-  let response = {};
-  if (!user.id) { error = true; errorsList.push('id'); }
-  if (!user.nombres) { error = true; errorsList.push('nombres'); }
-  if (!user.apellidos) { error = true; errorsList.push('apellidos'); }
-  if (!user.direccion) { error = true; errorsList.push('direccion'); }
-  if (!user.correo) { error = true; errorsList.push('correo'); }
-  if (!user.dni) { error = true; errorsList.push('dni'); }
-  if (!user.edad) { error = true; errorsList.push('edad'); }
-  if (!user.telefono) { error = true; errorsList.push('telefono'); }
-
-  errorsList.forEach((error, i) => {
-    response['Error-' + i + 1] = error;
-    if (i === errorsList.length - 1) {
-      console.log({Errors: response});
-      return { Erroros: response }; 
-    }
-  })
+function chekcEmail(email) {
+  return new Promise((resolve, reject) => {
+    // check if email is already in the database
+    const emailQuery = 'SELECT * FROM user WHERE correo = ?';
+    pool.query(emailQuery, [email], (err, rows) => {
+      if (err) {
+        reject({
+          error: true, detail: 'No se pudo acceder a la ' +
+            'base de datos para verificar el correo ' + email
+        });
+      } else {
+        if (rows.length === 0) resolve({ error: false })
+        else {
+          reject({
+            error: true, detail: 'El correo ' + email +
+              ' ya esta registrado'
+          });
+        }
+      }
+    })
+  });
 }
 
 function csvToJson(csv) {

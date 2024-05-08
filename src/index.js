@@ -5,18 +5,17 @@ import { PORT } from './config.js';
 
 //  test 
 const user = { 
-  // id: 1,
+  id: 2,
   nombres: 'Gabriel',
   apellidos: 'Ferrin',
   direccion: 'Calle 10 # 10-10',
-  correo: 'gabriel.ferrin',
+  correo: 'aagferrdin@gmail.com',
   dni: '12345678',
   edad: 20,
   telefono: '3124567890'
 };
 
-const result = validateUser(user);
-// console.log(result);
+console.log(await validateUser(user));
 
 // manejar peticiones al servidor
 const server = createServer(async (req, res) => {
