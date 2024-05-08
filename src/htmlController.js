@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 export function homePage(res) {
-  fs.readFile('views/home.html', 'utf-8', (err, data) => {
+  const filePath = path.resolve('./views/home.html');
+  fs.readFile(filePath, 'utf-8', (err, data) => {
     if (err) {
       res.writeHead(500, { 'Content-Type': 'text/html' });
       res.end('<h2>Error interno: No se pudo acceder al archivo html</h2>');
