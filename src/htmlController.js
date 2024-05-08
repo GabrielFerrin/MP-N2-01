@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export function homePage(res) {
-  const filePath = path.resolve('./views/home.html');
+  const filePath = path.resolve('./public/home.html');
   fs.readFile(filePath, 'utf-8', (err, data) => {
     if (err) {
       res.writeHead(500, { 'Content-Type': 'text/html' });

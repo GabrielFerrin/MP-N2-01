@@ -92,17 +92,18 @@ export function importUsers(res, req) {
   })
 }
 
-function addUser(user) {
+async function addUser(user) {
   return new Promise((resolve, reject) => {
     // validate data
     const resValidate = validateUser(user);
+    console.log(resValidate);
     if (resValidate.error) reject(resValidate);
     // add user
     else {
-      const query = 'INSERT INTO user (nombres, apellidos, ' +
+      const query = 'INSERT INTO user (id, nombres, apellidos, ' +
         'direccion, correo, dni, edad, fecha_creacion, ' +
-        'telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-      pool.query(query, [user.nombres, user.apellidos, user.direccion,
+        'telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      pool.query(query, [user.id, user.nombres, user.apellidos, user.direccion,
       user.correo, user.dni, user.edad, user.fecha_creacion,
       user.telefono], (err, result) => {
         // handle errors
@@ -117,8 +118,8 @@ function addUser(user) {
         else {
           resolve({
             status: 200, message: 'OK', details: 'id: ' +
-              rows.insertId + ' nombres: ' + user.nombres +
-              ' | apellidos: ' + user.apellidos, body: rows
+              ' nombres: ' + user.nombres + ' | apellidos: ' +
+              user.apellidos, body: result
           });
         }
       })
