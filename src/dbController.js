@@ -1,6 +1,7 @@
 import mysql2 from 'mysql2';
 import fs from 'node:fs';
-import { DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE } from './config.js';
+import { DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE }
+  from './config.js';
 
 // DB
 const pool = mysql2.createPool({
@@ -42,7 +43,11 @@ export async function exportUsers(res) {
   });
   fs.writeFile('./assets/temp/usuarios.csv', csv, (err) => {
     if (err) {
-      reject({ status: 500, message: 'No se pudo exportar el archivo', body: err });
+      reject({
+        status: 500,
+        message: 'No se pudo exportar el archivo',
+        body: err
+      });
     } else {
       fs.readFile('./assets/temp/usuarios.csv', 'utf-8', (err, data) => {
         if (err) {
@@ -79,98 +84,81 @@ export function importUsers(res, req) {
     const users = csvToJson(fileData);
     users.forEach(async (user, i) => {
       try {
-        details.push(await addUser(user));
+        details.push({ Id: user.id, Name: user.nombres, Details: await addUser(user)});
       } catch (err) {
-        details.push(err);
+        details.push({ Id: user.id, Name: user.nombres, Error: err.ErrorList});
       }
       if (i === users.length - 1) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.
-          stringify({ id: user.id, name: user.nombres, details }));
+        res.end(JSON.stringify(details));
       }
     })
   })
 }
 
-async function addUser(user) {
+export async function addUser(user) {
   return new Promise((resolve, reject) => {
     // validate data
-    const resValidate = validateUser(user);
-    console.log(resValidate);
-    if (resValidate.error) reject(resValidate);
-    // add user
-    else {
-      const query = 'INSERT INTO user (id, nombres, apellidos, ' +
-        'direccion, correo, dni, edad, fecha_creacion, ' +
-        'telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      pool.query(query, [user.id, user.nombres, user.apellidos, user.direccion,
-      user.correo, user.dni, user.edad, user.fecha_creacion,
-      user.telefono], (err, result) => {
-        // handle errors
-        if (err)
-          reject({
-            status: 500, message: 'Error de acceso a la base de ' +
-              'datos para agregar al usuario ' + user.nombres,
-            details: 'id: ' + user.id + ' | apellidos: ' + user.apellidos,
-            body: err
-          });
-        // notify success adding user
-        else {
-          resolve({
-            status: 200, message: 'OK', details: 'id: ' +
-              ' nombres: ' + user.nombres + ' | apellidos: ' +
-              user.apellidos, body: result
-          });
-        }
-      })
-    }
+    validateUser(user).then((resValidate) => {
+      if (resValidate !== 'OK') reject({ Id: user.id, Name:user.nombres, resValidate });
+      // add user
+      else {
+        const query = 'INSERT INTO user (id, nombres, apellidos, ' +
+          'direccion, correo, dni, edad, fecha_creacion, ' +
+          'telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        pool.query(query, [user.id, user.nombres, user.apellidos,
+        user.direccion, user.correo, user.dni, user.edad,
+        user.fecha_creacion, user.telefono],
+          (err, result) => {
+            // handle errors
+            if (err)
+              reject({
+                status: 500, message: 'Error de acceso a la base de ' +
+                  'datos para agregar al usuario ' + user.nombres,
+                details: 'id: ' + user.id + ' | apellidos: ' +
+                  user.apellidos,
+                body: err
+              });
+            // notify success adding user
+            else {
+              resolve({
+                status: 200, message: 'Agregado con éxito', details: 'id: ' +
+                  user.id + ' | nombres: ' + user.nombres + ' | apellidos: ' +
+                  user.apellidos, body: result
+              });
+            }
+          })
+      }
+    }).catch((err) => reject(err));
   });
 }
 
 export async function validateUser(user) {
-  let error = false;
   let errorsList = [];
   let response = {};
   // missing fields
-  if (!user.nombres) { error = true; errorsList.push('falta el campo \"nombres\"'); }
-  if (!user.apellidos) { error = true; errorsList.push('Falta el campo \"apellidos\"'); }
-  if (!user.direccion) { error = true; errorsList.push('Falta el campo \"direccion\"'); }
-  if (!user.correo) { error = true; errorsList.push('Falta el campo \"correo\"'); }
-  if (!user.dni) { error = true; errorsList.push('Falta el campo \"dni\"'); }
-  if (!user.edad) { error = true; errorsList.push('Falta el campo \"edad\"'); }
-  if (!user.telefono) { error = true; errorsList.push('Falta el campo \"telefono\"'); }
+  checkMissingFields(user, errorsList);
   // email format
-  if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(user.correo)) {
-    error = true;
+  if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+    .test(user.correo)) {
     errorsList.push('El correo ' + user.correo + ' no es valido');
   }
   // valid age
   if (user.edad < 0 || user.edad > 150) {
-    error = true;
     errorsList.push('La edad ' + user.edad + ' no es valida');
   }
   // id is not already in the database
   try {
-    const idCheck = await chekcId(user.id, user.correo);
-    if (idCheck.error) {
-      error = true;
-      errorsList.push(idCheck.detail);
-    }
-  } catch (err) {
-    error = true;
-    errorsList.push(err.detail);
-  }
+    const idCheck = await chekcId(user.id);
+    if (idCheck.error)
+      errorsList.push(idCheck.detail)
+  } catch (err) { errorsList.push(err.detail); }
   // email is not already in the database
   try {
     const emailCheck = await chekcEmail(user.correo);
-    if (emailCheck.error) {
-      error = true;
-      errorsList.push(emailCheck.detail);
-    }
-  } catch (err) {
-    error = true;
-    errorsList.push(err.detail);
-  }
+    if (emailCheck.error)
+      errorsList.push(emailCheck.detail)
+  } catch (err) { errorsList.push(err.detail); }
   // prepare and return error messages
   errorsList.forEach((error, i) => {
     response['Error-' + (i + 1)] = error;
@@ -241,4 +229,14 @@ function csvToJson(csv) {
     result.push(obj);
   })
   return result;
+}
+
+function checkMissingFields(user, errorsList) {
+  if (!user.nombres) errorsList.push('falta el campo \"nombres\"');
+  if (!user.apellidos) errorsList.push('Falta el campo \"apellidos\"')
+  if (!user.direccion) errorsList.push('Falta el campo \"direccion\"')
+  if (!user.correo) errorsList.push('Falta el campo \"correo\"')
+  if (!user.dni) errorsList.push('Falta el campo \"dni\"')
+  if (!user.edad) errorsList.push('Falta el campo \"edad\"')
+  if (!user.telefono) errorsList.push('Falta el campo \"telefono\"')
 }

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
-import { getUsers, exportUsers, importUsers, validateUser } from './dbController.js';
+import { getUsers, exportUsers, importUsers, addUser }
+  from './dbController.js';
 import { homePage } from './htmlController.js';
 import { PORT } from './config.js';
 
@@ -36,16 +37,101 @@ const server = createServer(async (req, res) => {
 const serverMessage = `Servidor levantado en http://localhost:${PORT}`;
 server.listen(PORT, () => console.log(serverMessage));
 
-//  test 
-// const user = { 
-//   id: 2,
-//   nombres: 'Gabriel',
-//   apellidos: 'Ferrin',
-//   direccion: 'Calle 10 # 10-10',
-//   correo: 'aagferrdin@gmail.com',
-//   dni: '12345678',
-//   edad: 20,
-//   telefono: '3124567890'
-// };
+const testUser = [
+  {
+    "id": 1,
+    "nombres": "Gabriel",
+    "apellidos": "Ferrin",
+    "direccion": "Mi casa",
+    "correo": "agferrin@gmail.com",
+    "dni": 1234746387,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 09:50:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 2,
+    "nombres": "David",
+    "apellidos": "Parrales",
+    "direccion": "Su casa",
+    "correo": "david@gmail.com",
+    "dni": 123474634,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 3,
+    "nombres": "Juan",
+    "apellidos": "Parrales",
+    "direccion": "Su casa",
+    "correo": "juan@gmail.com",
+    "dni": 123474634,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 4,
+    "nombres": "Pedro",
+    "apellidos": "Ferrin",
+    "direccion": "Mi casa",
+    "correo": "pedro@gmail.com",
+    "dni": 1234746387,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 5,
+    "nombres": "Daniel",
+    "apellidos": "Ferrin",
+    "direccion": "Mi casa",
+    "correo": "daniel@gmail.com",
+    "dni": 1234746387,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 6,
+    "nombres": "Sergio",
+    "apellidos": "Parrales",
+    "direccion": "Su casa",
+    "correo": "sergio@gmail.com",
+    "dni": 123474634,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 7,
+    "nombres": "Ramiro",
+    "apellidos": "Parrales",
+    "direccion": "Su casa",
+    "correo": "ramiro@gmail.com",
+    "dni": 123474634,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  },
+  {
+    "id": 7,
+    "nombres": "Paul",
+    "apellidos": "Ferrin",
+    "direccion": "Mi casa",
+    "correo": "agferrin@gmail.com",
+    "dni": 1234746387,
+    "edad": 15,
+    "fecha_creacion": "2024-05-06 00:00:00",
+    "telefono": "+593-98-341-1576"
+  }
+]
 
-// console.log(await validateUser(user));
+testUser.forEach(async (element) => {
+  try {
+    console.log(await addUser(element));
+  } catch (error) {
+    console.log(error);
+  }
+})

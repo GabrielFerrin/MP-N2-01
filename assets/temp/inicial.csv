@@ -1,0 +1,9 @@
+id,nombres,apellidos,direccion,correo,dni,edad,fecha_creacion,telefono
+1,Gabriel,Ferrin,Mi casa,agferrin@gmail.com,1234746387,15,2024-05-06 09:50:00,+593-98-341-1576
+2,David,Parrales,Su casa,david@gmail.com,123474634,15,2024-05-06 00:00:00,+593-98-341-1576
+3,Juan,Parrales,Su casa,juan@gmail.com,123474634,15,2024-05-06 00:00:00,+593-98-341-1576
+4,Pedro,Ferrin,Mi casa,pedro@gmail.com,1234746387,15,2024-05-06 00:00:00,+593-98-341-1576
+5,Daniel,Ferrin,Mi casa,daniel@gmail.com,1234746387,15,2024-05-06 00:00:00,+593-98-341-1576
+6,Sergio,Parrales,Su casa,sergio@gmail.com,123474634,15,2024-05-06 00:00:00,+593-98-341-1576
+7,Ramiro,Parrales,Su casa,ramiro@gmail.com,123474634,15,2024-05-06 00:00:00,+593-98-341-1576
+7,Paul,Ferrin,Mi casa,agferrin@gmail.com,1234746387,15,2024-05-06 00:00:00,+593-98-341-1576
