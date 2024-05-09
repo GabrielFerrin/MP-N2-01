@@ -84,9 +84,15 @@ export function importUsers(res, req) {
     const users = csvToJson(fileData);
     users.forEach(async (user, i) => {
       try {
-        details.push({ Id: user.id, Name: user.nombres, Details: await addUser(user) });
+        details.push({
+          Id: user.id, Name: user.nombres,
+          Details: await addUser(user)
+        });
       } catch (err) {
-        details.push({ Id: user.id, Name: user.nombres, Error: err.ErrorList });
+        details.push({
+          Id: user.id, Name: user.nombres,
+          Error: err.ErrorList
+        });
       }
       if (i === users.length - 1) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -128,7 +134,7 @@ export async function addUser(user) {
               resolve({
                 status: 200, message: 'Agregado con éxito', details: 'id: ' +
                   user.id + ' | nombres: ' + user.nombres + ' | apellidos: ' +
-                  user.apellidos, body: result
+                  user.apellidos
               });
             }
           })

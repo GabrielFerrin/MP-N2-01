@@ -3,6 +3,7 @@ import { getUsers, exportUsers, importUsers, addUser }
   from './dbController.js';
 import { homePage } from './htmlController.js';
 import { PORT } from './config.js';
+import { testUsers, test } from './test.js';
 
 // manejar peticiones al servidor
 const server = createServer(async (req, res) => {
@@ -36,3 +37,13 @@ const server = createServer(async (req, res) => {
 // levantar servidor
 const serverMessage = `Servidor levantado en http://localhost:${PORT}`;
 server.listen(PORT, () => console.log(serverMessage));
+
+// ejecutar test
+if (test)
+  testUsers.forEach(async (user) => {
+    try {
+      console.log(await addUser(user))
+    } catch (err) {
+      console.log(err)
+    }
+  });
