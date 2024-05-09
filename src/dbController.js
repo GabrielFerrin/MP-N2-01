@@ -84,9 +84,9 @@ export function importUsers(res, req) {
     const users = csvToJson(fileData);
     users.forEach(async (user, i) => {
       try {
-        details.push({ Id: user.id, Name: user.nombres, Details: await addUser(user)});
+        details.push({ Id: user.id, Name: user.nombres, Details: await addUser(user) });
       } catch (err) {
-        details.push({ Id: user.id, Name: user.nombres, Error: err.ErrorList});
+        details.push({ Id: user.id, Name: user.nombres, Error: err.ErrorList });
       }
       if (i === users.length - 1) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -100,7 +100,11 @@ export async function addUser(user) {
   return new Promise((resolve, reject) => {
     // validate data
     validateUser(user).then((resValidate) => {
-      if (resValidate !== 'OK') reject({ Id: user.id, Name:user.nombres, resValidate });
+      if (resValidate !== 'OK')
+        reject({
+          Id: user.id, Name: user.nombres || '',
+          ErrorList: resValidate.ErrorsList
+        });
       // add user
       else {
         const query = 'INSERT INTO user (id, nombres, apellidos, ' +
@@ -113,8 +117,8 @@ export async function addUser(user) {
             // handle errors
             if (err)
               reject({
-                status: 500, message: 'Error de acceso a la base de ' +
-                  'datos para agregar al usuario ' + user.nombres,
+                status: 500, message: 'Error al intentar agregar al usuario '
+                  + user.nombres + ' a la base de datos',
                 details: 'id: ' + user.id + ' | apellidos: ' +
                   user.apellidos,
                 body: err
@@ -129,7 +133,7 @@ export async function addUser(user) {
             }
           })
       }
-    }).catch((err) => reject(err));
+    });
   });
 }
 
